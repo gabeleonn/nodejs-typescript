@@ -2,8 +2,17 @@
 import dotenv from 'dotenv';
 import http from 'http';
 import app from '../index';
+import { Logger } from './logger';
 
 dotenv.config();
+
+interface HttpException extends Error {
+  errno?: number;
+  code?: string;
+  path?: string;
+  syscall?: string;
+  stack?: string;
+}
 
 const normalizePort = (val: string) => {
   const port = parseInt(val, 10);
@@ -28,14 +37,6 @@ app.set('port', port);
 // Create HTTP server.
 const server = http.createServer(app);
 
-export interface HttpException extends Error {
-  errno?: number;
-  code?: string;
-  path?: string;
-  syscall?: string;
-  stack?: string;
-}
-
 const onError = (error: HttpException) => {
   if (error.syscall !== 'listen') {
     throw error;
@@ -46,10 +47,10 @@ const onError = (error: HttpException) => {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(`${bind} requires elevated privileges`);
+      Logger.error(`${bind} requires elevated privileges`);
       process.exit(1);
     case 'EADDRINUSE':
-      console.error(`${bind} is already in use`);
+      Logger.error(`${bind} is already in use`);
       process.exit(1);
     default:
       throw error;
@@ -59,7 +60,7 @@ const onError = (error: HttpException) => {
 const onListening = () => {
   const addr = server.address();
   const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr?.port}`;
-  console.log(`✔ Listening on ${bind}`);
+  Logger.info(`✔ Listening on ${bind}`);
 };
 
 server.listen(port);
